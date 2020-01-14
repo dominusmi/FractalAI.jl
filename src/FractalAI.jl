@@ -1,4 +1,4 @@
-module FractalMC
+module FractalAI
 
 using Statistics, StatsBase
 
