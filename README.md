@@ -38,3 +38,10 @@ Distance(m::YourModel, w1::AbstractWalker, w2::AbstractWalker)
 For a basic example, see examples/GridModel
 
 [Read more about it here](https://arxiv.org/pdf/1803.05049.pdf)
+
+
+## TODO
+
+- Parallelise
+- Find a better logging system
+- Implement default decision for continuous model
