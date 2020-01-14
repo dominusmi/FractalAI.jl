@@ -114,6 +114,33 @@ function Clone!(e::AbstractEnvironment, i::Int, j::Int)
     copy!(e.walkers[i], e.walkers[j])
 end
 
+""" Returns a random number j != i in interval 1:k """
+function DifferentIndexInInterval(i::Int, interval::AbstractArray)
+    j = i
+    while j == i
+        j = rand(interval)
+    end
+    j
+end
+
+""" Computes virtual reward given current walker states """
+function ComputeVirtualReward(e)
+    n_walkers = size(e.walkers,1)
+    R = zeros(n_walkers)
+    D = zeros(n_walkers)
+
+    for (i,walker) in enumerate(e.walkers)
+        j = DifferentIndexInInterval(i, 1:n_walkers)
+        R[i] = Reward(e, walker)
+        D[i] = Distance(e, i, j)
+    end
+
+    Relativise!(R)
+    Relativise!(D)
+
+    R .* D
+end
+
 """ Run the scan process """
 function Scan!(e::AbstractEnvironment)
     n_walkers = size(e.walkers,1)
@@ -127,22 +154,7 @@ function Scan!(e::AbstractEnvironment)
 
     for t in e.dt:e.dt:e.τ
         ### Compute rewards and distances
-        R = zeros(n_walkers)
-        D = zeros(n_walkers)
-
-        for (i,walker) in enumerate(e.walkers)
-            j = i
-            while j == i
-                j = rand(1:n_walkers)
-            end
-            R[i] = Reward(e, walker)
-            D[i] = Distance(e, i, j)
-        end
-
-        Relativise!(R)
-        Relativise!(D)
-
-        VR = R .* D
+        VR = ComputeVirtualReward(e)
 
         # If rewards where 0., maximise distance (exploration)
         if all(isnan.(VR))
@@ -151,10 +163,8 @@ function Scan!(e::AbstractEnvironment)
 
         ### Update agents and run simulation
         for (i,walker) in enumerate(e.walkers)
-            j = i
-            while j == i
-                j = rand(1:n_walkers)
-            end
+            j = DifferentIndexInInterval(i, 1:n_walkers)
+
             if VR[i] == 0.
                 Clone!(e, i, j)
             elseif VR[i] > VR[j]
