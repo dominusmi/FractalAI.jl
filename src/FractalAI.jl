@@ -96,6 +96,12 @@ ExecuteAction!(m::AbstractModel, w::AbstractWalker, a) = nothing
 
 Simulate!(e::AbstractEnvironment, w::AbstractWalker, dt::Number) = nothing
 Simulate!(e::AbstractEnvironment, w::AbstractWalker) = Simulate!(e, w, e.dt)
+function Simulate!(e::AbstractEnvironment, log::Array)
+    for (i,walker) in enumerate(e.walkers)
+        statesHistory = Simulate!(e, walker)
+        append!(log[i], statesHistory)
+    end
+end
 
 Reward(m::AbstractModel, w::AbstractWalker) = 0.
 Reward(e::AbstractEnvironment, w::AbstractWalker) = Reward(e.model, w)
@@ -147,10 +153,7 @@ function Scan!(e::AbstractEnvironment)
     log = [[copy(e.initialState)] for i in 1:size(e.walkers,1)]
 
     # First step
-    for (i,walker) in enumerate(e.walkers)
-        statesHistory = Simulate!(e, walker)
-        append!(log[i], statesHistory)
-    end
+    Simulate(e, log)
 
     for t in e.dt:e.dt:e.τ
         ### Compute rewards and distances
@@ -161,10 +164,11 @@ function Scan!(e::AbstractEnvironment)
             VR = D
         end
 
-        ### Update agents and run simulation
+        ### Update agents
         for (i,walker) in enumerate(e.walkers)
             j = DifferentIndexInInterval(i, 1:n_walkers)
 
+            # Execute or skip cloning
             if VR[i] == 0.
                 Clone!(e, i, j)
             elseif VR[i] > VR[j]
@@ -175,10 +179,9 @@ function Scan!(e::AbstractEnvironment)
                     Clone!(e, i, j)
                 end
             end
-            # TODO: Find a better logging system
-            statesHistory = Simulate!(e, walker)
-            append!(log[i], statesHistory)
         end
+        ### Run simulation
+        Simulate!(e, log)
         ScanLoopHook(e)
     end
     log
