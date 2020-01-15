@@ -1,6 +1,6 @@
 # FractalAI.jl
 
-FractalAI is a theory of intelligence simply defined as the process of maximising future entropy. (	arXiv:1803.05049 )
+FractalAI is an intelligent sampling method based on the process of maximising future entropy. ( arXiv:1803.05049 )
 
 This repository implements a basic working scanning process, for which one simply needs to implement their own model (a basic walker and a step environment is already implemented)
 
